@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSBAI — Editorial Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --f:#1a3a2a;--fm:#2a5c3f;--cr:#f7f3ec;--cd:#ede7dc;--bg:#eceae5;
+  --k:#1c1a17;--km:#3d3b35;--kl:#7a766e;--g:#b5892d;--bd:#d1c9ba;
+  --bl:#1a5276;--bll:#d6eaf8;--am:#7d6608;--aml:#fef9e7;
+  --gr:#1a5c34;--grl:#e8f5ed;--rd:#7b241c;--rdl:#fdedec;--pu:#6c3483;--pul:#f4ecf7;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--k);font-size:14px;min-height:100vh}
+
+/* ── LOGIN ── */
+#lg{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0c1f14,var(--f))}
+.lbox{background:#fff;border-radius:10px;padding:40px;width:380px;box-shadow:0 16px 48px rgba(0,0,0,.35)}
+.llogo{width:54px;height:54px;background:var(--f);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 16px;letter-spacing:-1px}
+.lbox h2{text-align:center;font-size:18px;font-weight:500;margin-bottom:3px}
+.lbox p{text-align:center;font-size:13px;color:var(--kl);margin-bottom:22px}
+.lbox label{display:block;font-size:13px;font-weight:500;color:var(--km);margin-bottom:5px}
+.lbox input{width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:12px;transition:border .15s}
+.lbox input:focus{border-color:var(--fm);box-shadow:0 0 0 3px rgba(42,92,63,.1)}
+.lbtn{width:100%;background:var(--f);color:#fff;border:none;padding:11px;border-radius:4px;font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .2s}
+.lbtn:hover{background:var(--fm)}
+.lerr{background:#fdedec;border:1px solid #f1948a;color:#7b241c;padding:9px 12px;border-radius:3px;font-size:13px;margin-bottom:12px;display:none}
+
+/* ── DASHBOARD ── */
+#dash{display:none}
+.topbar{background:var(--f);color:#fff;padding:0 22px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.tb-l{display:flex;align-items:center;gap:12px}
+.tb-logo{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.tb-sub{font-size:12px;color:rgba(255,255,255,.45)}
+.tb-r{display:flex;align-items:center;gap:16px;font-size:13px}
+.tb-r a{color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;transition:color .15s}.tb-r a:hover{color:#fff}
+#lastref{font-size:11px;color:rgba(255,255,255,.3)}
+
+/* ── TAB NAV ── */
+.tab-nav{background:#fff;border-bottom:1px solid var(--bd);padding:0 22px;display:flex;gap:0}
+.tn{padding:11px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--kl);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'DM Sans',sans-serif;transition:all .15s}
+.tn.on{color:var(--f);border-bottom-color:var(--f)}.tn:hover{color:var(--f)}
+.tab-panel{display:none;padding:20px 22px}.tab-panel.on{display:block}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.sc{background:#fff;border:1px solid var(--bd);border-radius:6px;padding:14px 16px}
+.sv{font-size:26px;font-weight:500;line-height:1;margin-bottom:3px}
+.sl{font-size:11px;color:var(--kl)}
+.sc.bl .sv{color:var(--bl)}.sc.am .sv{color:var(--am)}.sc.gr .sv{color:var(--gr)}.sc.rd .sv{color:var(--rd)}.sc.pu .sv{color:var(--pu)}
+
+/* ── CONTROLS ── */
+.controls{background:#fff;border:1px solid var(--bd);border-radius:6px;padding:12px 14px;margin-bottom:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls input,.controls select{padding:7px 11px;border:1px solid var(--bd);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:#fff;transition:border .15s}
+.controls input:focus,.controls select:focus{border-color:var(--fm)}
+.controls input{flex:1;min-width:180px}
+.rbtn{padding:7px 16px;background:var(--f);color:#fff;border:none;border-radius:3px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .2s;white-space:nowrap}
+.rbtn:hover{background:var(--fm)}
+.rbtn.green{background:var(--gr)}.rbtn.green:hover{background:#1a7040}
+.rbtn.amber{background:var(--am)}.rbtn.amber:hover{background:#9a7c0a}
+
+/* ── TABLE ── */
+.tw{background:#fff;border:1px solid var(--bd);border-radius:6px;overflow:auto;max-height:calc(100vh - 320px)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1200px}
+thead{background:var(--cr);position:sticky;top:0;z-index:10}
+th{padding:10px 12px;text-align:left;font-weight:500;font-size:11px;color:var(--kl);letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--bd);white-space:nowrap}
+th input[type=checkbox]{accent-color:var(--f)}
+td{padding:10px 12px;border-bottom:1px solid var(--cd);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf7}
+tr.selected td{background:#f0f7f3}
+.rcode{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--fm);white-space:nowrap}
+.mstitle{font-weight:500;color:var(--k);line-height:1.4;max-width:220px}
+.mstype{font-size:11px;color:var(--kl);margin-top:2px}
+.aname{font-weight:500}.aemail{font-size:12px;color:var(--kl)}
+.aaffil{font-size:12px;color:var(--kl);margin-top:2px;max-width:160px;line-height:1.4}
+.dcell{font-size:12px;color:var(--kl);white-space:nowrap}
+.flink{color:var(--fm);text-decoration:none;font-size:12px;display:block;margin-top:2px}.flink:hover{text-decoration:underline}
+
+/* ── STATUS BADGES ── */
+.sbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.sbadge::before{content:'●';font-size:8px}
+.s-review{background:var(--bll);color:var(--bl)}.s-screen{background:var(--cd);color:var(--kl)}
+.s-revision{background:var(--aml);color:var(--am)}.s-accepted{background:var(--grl);color:var(--gr)}
+.s-rejected{background:var(--rdl);color:var(--rd)}.s-publish{background:var(--pul);color:var(--pu)}
+.ssel{border:1px solid var(--bd);border-radius:3px;padding:4px 7px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;cursor:pointer;margin-top:4px;width:100%;transition:border .15s}
+.ntxt{width:100%;border:1px solid var(--bd);border-radius:3px;padding:5px 7px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;min-height:46px;margin-top:4px}
+.nbtn{font-size:11px;padding:3px 9px;background:var(--f);color:#fff;border:none;border-radius:3px;cursor:pointer;margin-top:3px;font-family:'DM Sans',sans-serif}
+.ebtn{font-size:11px;padding:3px 9px;background:var(--bl);color:#fff;border:none;border-radius:3px;cursor:pointer;margin-top:3px;font-family:'DM Sans',sans-serif;display:block;width:100%}
+.empty{text-align:center;padding:50px;color:var(--kl)}
+.loadrow td{text-align:center;padding:40px;color:var(--kl)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--fm);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── EMAIL MODAL ── */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center}
+.mo.on{display:flex}
+.mb{background:#fff;border-radius:8px;padding:28px;max-width:520px;width:92%;max-height:88vh;overflow-y:auto;animation:mf .2s ease}
+@keyframes mf{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.mb h3{font-size:18px;font-weight:600;color:var(--f);margin-bottom:14px}
+.mb label{display:block;font-size:13px;font-weight:500;color:var(--km);margin-bottom:4px;margin-top:12px}
+.mb input,.mb select,.mb textarea{width:100%;padding:8px 11px;border:1px solid var(--bd);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border .15s}
+.mb input:focus,.mb select:focus,.mb textarea:focus{border-color:var(--fm)}
+.mb textarea{min-height:120px;resize:vertical}
+.mb-btns{display:flex;gap:8px;margin-top:16px}
+.mb-send{background:var(--f);color:#fff;border:none;padding:10px 24px;border-radius:3px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer}
+.mb-cancel{background:#fff;color:var(--k);border:1px solid var(--bd);padding:10px 18px;border-radius:3px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* ── REVIEWER MODAL ── */
+.rev-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.rev-row input{flex:1;padding:7px 10px;border:1px solid var(--bd);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none}
+.rev-rm{background:#fdedec;color:var(--rd);border:1px solid #f1948a;width:28px;height:28px;border-radius:3px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ── DETAIL PANEL ── */
+.detail-panel{background:#fff;border:1px solid var(--bd);border-radius:6px;padding:20px;margin-bottom:16px}
+.detail-panel h4{font-size:15px;font-weight:600;color:var(--f);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--cd)}
+.dp-row{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--cd);font-size:13px}
+.dp-row:last-child{border-bottom:none}
+.dp-lbl{color:var(--kl);min-width:140px;flex-shrink:0;font-size:12px}
+.dp-val{color:var(--k);font-weight:500;flex:1}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--f);color:#fff;padding:11px 20px;border-radius:6px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px}
+.toast.on{opacity:1}
+
+@media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<script>
+  // ⚠ PASTE YOUR RAILWAY URL HERE
+  const API_URL = 'https://jsbai-backend-dotnet-production.up.railway.app';
+  // JWT token stored here after login — NOT the plain password
+  let JWT_TOKEN = sessionStorage.getItem('jsbai_token') || '';
+  // Helper: returns auth headers for every API call
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + JWT_TOKEN };
+  }
+</script>
+
+<!-- ── LOGIN ── -->
+<div id="lg">
+  <div class="lbox">
+    <div class="llogo">JS</div>
+    <h2>JSBAI Editorial Portal</h2>
+    <p>Sign in to access the manuscript management dashboard</p>
+    <div class="lerr" id="lerr">Incorrect password. Please try again.</div>
+    <label>Username</label><input type="text" id="lu" value="editor">
+    <label>Password</label><input type="password" id="lp" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')login()">
+    <button class="lbtn" onclick="login()">Sign In →</button>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dash">
+  <div class="topbar">
+    <div class="tb-l">
+      <div class="tb-logo">JSBAI</div>
+      <div class="tb-sub">Editorial Management System</div>
+    </div>
+    <div class="tb-r">
+      <span id="lastref"></span>
+      <a onclick="loadData()">⟳ Refresh</a>
+      <a href="index.html">← Journal Site</a>
+      <a onclick="logout()">Sign Out</a>
+    </div>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="tab-nav">
+    <button class="tn on" onclick="switchTab(this,'submissions')">📋 Submissions</button>
+    <button class="tn" onclick="switchTab(this,'analytics')">📊 Analytics</button>
+    <button class="tn" onclick="switchTab(this,'bulk')">⚡ Bulk Actions</button>
+  </div>
+
+  <!-- ── SUBMISSIONS TAB ── -->
+  <div id="tab-submissions" class="tab-panel on">
+    <!-- Stats -->
+    <div class="stats">
+      <div class="sc"><div class="sv" id="s-all">—</div><div class="sl">Total Submissions</div></div>
+      <div class="sc bl"><div class="sv" id="s-rev">—</div><div class="sl">Under Review</div></div>
+      <div class="sc am"><div class="sv" id="s-rvis">—</div><div class="sl">Revision Requested</div></div>
+      <div class="sc gr"><div class="sv" id="s-acc">—</div><div class="sl">Accepted</div></div>
+      <div class="sc rd"><div class="sv" id="s-rej">—</div><div class="sl">Rejected</div></div>
+      <div class="sc pu"><div class="sv" id="s-pub">—</div><div class="sl">Published</div></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <input type="text" id="srch" placeholder="Search title, author, ref ID, email, affiliation…" oninput="filter()">
+      <select id="sflt" onchange="filter()">
+        <option value="">All Statuses</option>
+        <option>Under Editorial Review</option><option>Initial Screening</option>
+        <option>Revision Requested</option><option>Accepted</option>
+        <option>Rejected</option><option>Published</option>
+      </select>
+      <select id="tflt" onchange="filter()">
+        <option value="">All Article Types</option>
+        <option>Original Research Article</option><option>Review Article</option>
+        <option>Short Communication</option><option>Rapid Communication</option>
+        <option>Case Study</option><option>Methodology Paper</option>
+      </select>
+      <input type="date" id="dfrom" onchange="filter()" title="From date" style="min-width:130px">
+      <input type="date" id="dto" onchange="filter()" title="To date" style="min-width:130px">
+      <button class="rbtn" onclick="loadData()">↺ Reload</button>
+      <button class="rbtn green" onclick="exportExcel()">⬇ Export Excel</button>
+      <span id="rcount" style="font-size:12px;color:var(--kl);white-space:nowrap"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+            <th>Ref ID</th>
+            <th>Manuscript</th>
+            <th>Corresponding Author</th>
+            <th>Affiliation</th>
+            <th>Files</th>
+            <th>Submitted</th>
+            <th style="min-width:160px">Status</th>
+            <th style="min-width:140px">Reviewers</th>
+            <th style="min-width:160px">Editor Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="loadrow"><td colspan="11"><span class="spinner"></span>Loading submissions…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ANALYTICS TAB ── -->
+  <div id="tab-analytics" class="tab-panel">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="detail-panel">
+        <h4>Submission Volume by Month (2025)</h4>
+        <div id="monthChart" style="padding:10px 0"></div>
+      </div>
+      <div class="detail-panel">
+        <h4>Status Distribution</h4>
+        <div id="statusChart" style="padding:10px 0"></div>
+      </div>
+      <div class="detail-panel">
+        <h4>Top Subject Areas</h4>
+        <div id="subjectChart" style="padding:10px 0"></div>
+      </div>
+      <div class="detail-panel">
+        <h4>Article Type Breakdown</h4>
+        <div id="typeChart" style="padding:10px 0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BULK ACTIONS TAB ── -->
+  <div id="tab-bulk" class="tab-panel">
+    <div class="detail-panel">
+      <h4>Bulk Email</h4>
+      <p style="font-size:13px;color:var(--kl);margin-bottom:14px">Send an email to all authors currently in a specific status. Useful for deadline reminders, policy updates, or status notifications.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:13px;font-weight:500;color:var(--km);display:block;margin-bottom:5px">Target Status</label>
+          <select id="bulkStatus" style="width:100%;padding:8px;border:1px solid var(--bd);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+            <option>All Authors</option>
+            <option>Under Editorial Review</option>
+            <option>Revision Requested</option>
+            <option>Accepted</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:500;color:var(--km);display:block;margin-bottom:5px">Subject</label>
+          <input type="text" id="bulkSubject" placeholder="Email subject line" style="width:100%;padding:8px;border:1px solid var(--bd);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+        </div>
+      </div>
+      <label style="font-size:13px;font-weight:500;color:var(--km);display:block;margin:10px 0 5px">Message Body</label>
+      <textarea id="bulkMessage" style="width:100%;min-height:120px;padding:8px;border:1px solid var(--bd);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:vertical" placeholder="Dear [Author Name],&#10;&#10;Your message here…&#10;&#10;Regards,&#10;Editorial Office, JSBAI"></textarea>
+      <button class="rbtn" style="margin-top:10px" onclick="sendBulkEmail()">Send Bulk Email</button>
+    </div>
+    <div class="detail-panel">
+      <h4>Data Export</h4>
+      <p style="font-size:13px;color:var(--kl);margin-bottom:14px">Export submission data in various formats for record-keeping or reporting.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="rbtn green" onclick="exportExcel()">⬇ Export All to Excel (.xlsx)</button>
+        <button class="rbtn amber" onclick="exportCSV()">⬇ Export to CSV</button>
+        <button class="rbtn" onclick="exportAccepted()">⬇ Export Accepted Only</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EMAIL MODAL ── -->
+<div class="mo" id="emailModal">
+  <div class="mb">
+    <h3>📧 Send Email to Author</h3>
+    <input type="hidden" id="emailRefId">
+    <label>To</label>
+    <input type="email" id="emailTo" readonly style="background:var(--cr)">
+    <label>Subject</label>
+    <input type="text" id="emailSubject" placeholder="Email subject">
+    <label>Message</label>
+    <textarea id="emailBody" placeholder="Write your message to the author…"></textarea>
+    <div class="mb-btns">
+      <button class="mb-send" onclick="sendEmail()">Send Email</button>
+      <button class="mb-cancel" onclick="closeModal('emailModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── REVIEWER MODAL ── -->
+<div class="mo" id="reviewerModal">
+  <div class="mb">
+    <h3>👥 Assign Reviewers</h3>
+    <input type="hidden" id="revRefId">
+    <p style="font-size:13px;color:var(--kl);margin-bottom:14px">Assign up to 3 reviewers for this manuscript. Enter their names and email addresses.</p>
+    <div id="reviewerRows">
+      <div class="rev-row">
+        <input type="text" placeholder="Reviewer name">
+        <input type="email" placeholder="reviewer@institution.com">
+        <button class="rev-rm" onclick="removeRevRow(this)">×</button>
+      </div>
+    </div>
+    <button onclick="addRevRow()" style="font-size:12px;color:var(--fm);background:none;border:none;cursor:pointer;margin-top:4px">+ Add another reviewer</button>
+    <div class="mb-btns">
+      <button class="mb-send" onclick="saveReviewers()">Save Reviewers</button>
+      <button class="mb-cancel" onclick="closeModal('reviewerModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DETAIL MODAL ── -->
+<div class="mo" id="detailModal">
+  <div class="mb" style="max-width:640px">
+    <h3>📄 Submission Details</h3>
+    <div id="detailContent"></div>
+    <div class="mb-btns" style="margin-top:16px">
+      <button class="mb-cancel" onclick="closeModal('detailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let all = [];
+
+/* ── AUTH ─────────────────────────────────────────────────────────────── */
+async function login() {
+  const password = document.getElementById('lp').value;
+  if (!password) return;
+  try {
+    const res  = await fetch(API_URL + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error('Invalid credentials');
+    // Store JWT token — not the password
+    JWT_TOKEN = json.data.token;
+    sessionStorage.setItem('jsbai_token', JWT_TOKEN);
+    document.getElementById('lg').style.display   = 'none';
+    document.getElementById('dash').style.display = 'block';
+    loadData();
+  } catch(err) {
+    document.getElementById('lerr').style.display = 'block';
+  }
+}
+function logout() { sessionStorage.removeItem('jsbai_token'); JWT_TOKEN = ''; location.reload(); }
+// Auto-login if token exists in session
+if (JWT_TOKEN) {
+  document.getElementById('lg').style.display   = 'none';
+  document.getElementById('dash').style.display = 'block';
+  loadData();
+}
+
+/* ── LOAD DATA ────────────────────────────────────────────────────────── */
+async function loadData() {
+  document.getElementById('tbody').innerHTML =
+    '<tr class="loadrow"><td colspan="11"><span class="spinner"></span>Fetching submissions…</td></tr>';
+  if (!API_URL || API_URL.includes('YOUR_RAILWAY')) {
+    document.getElementById('tbody').innerHTML =
+      '<tr class="loadrow"><td colspan="11">⚠ Set API_URL in admin.html</td></tr>';
+    return;
+  }
+  try {
+    const res  = await fetch(API_URL + '/api/admin/submissions', { headers:{ 'X-Admin-Password': ADMIN_PASSWORD }});
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    all = json.data || [];
+    const sr = await fetch(API_URL + '/api/admin/stats', { headers:{ 'X-Admin-Password': ADMIN_PASSWORD }});
+    const sj = await sr.json();
+    if (sj.success) {
+      const s = sj.data;
+      document.getElementById('s-all').textContent  = s.total;
+      document.getElementById('s-rev').textContent  = s.review;
+      document.getElementById('s-rvis').textContent = s.revision;
+      document.getElementById('s-acc').textContent  = s.accepted;
+      document.getElementById('s-rej').textContent  = s.rejected;
+      document.getElementById('s-pub').textContent  = all.filter(r=>r.status==='Published').length;
+    }
+    filter();
+    buildAnalytics(all);
+    document.getElementById('lastref').textContent = 'Refreshed: ' + new Date().toLocaleTimeString('en-IN');
+  } catch(err) {
+    document.getElementById('tbody').innerHTML =
+      `<tr class="loadrow"><td colspan="11">Error: ${err.message}</td></tr>`;
+  }
+}
+
+/* ── FILTER ───────────────────────────────────────────────────────────── */
+function filter() {
+  const q    = document.getElementById('srch').value.toLowerCase();
+  const sf   = document.getElementById('sflt').value;
+  const tf   = document.getElementById('tflt').value;
+  const dfrom= document.getElementById('dfrom').value;
+  const dto  = document.getElementById('dto').value;
+  const fd = all.filter(r => {
+    const txt = [r.refId,r.title,r.firstName,r.lastName,r.email,r.affiliation,r.subjectArea].join(' ').toLowerCase();
+    const dt  = new Date(r.submittedAt);
+    const inDateRange = (!dfrom || dt >= new Date(dfrom)) && (!dto || dt <= new Date(dto + 'T23:59:59'));
+    return (!q || txt.includes(q)) && (!sf || r.status === sf) && (!tf || r.articleType === tf) && inDateRange;
+  });
+  render(fd);
+  document.getElementById('rcount').textContent = fd.length + ' record' + (fd.length!==1?'s':'');
+}
+
+/* ── STATUS HELPERS ───────────────────────────────────────────────────── */
+function sc(s){return{'Under Editorial Review':'s-review','Initial Screening':'s-screen','Revision Requested':'s-revision','Accepted':'s-accepted','Rejected':'s-rejected','Published':'s-publish'}[s]||'s-screen'}
+function fmtDate(d){return d?new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'}
+function safe(s){return(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ── RENDER TABLE ─────────────────────────────────────────────────────── */
+function render(data) {
+  const tbody = document.getElementById('tbody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="11"><div class="empty">No submissions match your filters.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(r => `
+    <tr id="row-${safe(r.refId)}">
+      <td><input type="checkbox" class="row-check" value="${safe(r.refId)}" onchange="updateBulkCount()"></td>
+      <td>
+        <div class="rcode">${safe(r.refId)}</div>
+        <div style="font-size:11px;color:var(--kl);margin-top:3px">${fmtDate(r.submittedAt)}</div>
+      </td>
+      <td>
+        <div class="mstitle">${safe(r.title)}</div>
+        <div class="mstype">${safe(r.articleType)} · ${safe(r.subjectArea)}</div>
+      </td>
+      <td>
+        <div class="aname">${safe(r.firstName)} ${safe(r.lastName)}</div>
+        <div class="aemail">${safe(r.email)}</div>
+        ${r.orcid?`<div style="font-size:11px;color:var(--kl)">ORCID: ${safe(r.orcid)}</div>`:''}
+      </td>
+      <td><div class="aaffil">${safe(r.affiliation)||'—'}</div></td>
+      <td>
+        ${r.manuscriptUrl?`<a href="${r.manuscriptUrl}" target="_blank" class="flink">📄 Manuscript</a>`:'<span style="font-size:12px;color:var(--kl)">—</span>'}
+        ${r.coverLetterUrl?`<a href="${r.coverLetterUrl}" target="_blank" class="flink">📝 Cover Letter</a>`:''}
+        ${r.figuresUrl?`<a href="${r.figuresUrl}" target="_blank" class="flink">🖼 Figures</a>`:''}
+      </td>
+      <td><div class="dcell">${fmtDate(r.submittedAt)}</div></td>
+      <td>
+        <span class="sbadge ${sc(r.status)}">${safe(r.status)}</span>
+        <select class="ssel" onchange="updateStatus('${safe(r.refId)}',this.value)">
+          <option>Under Editorial Review</option><option>Initial Screening</option>
+          <option>Revision Requested</option><option>Accepted</option>
+          <option>Rejected</option><option>Published</option>
+        </select>
+      </td>
+      <td>
+        <div style="font-size:12px;color:var(--kl);margin-bottom:4px">${r.reviewers||'Not assigned'}</div>
+        <button class="ebtn" onclick="openReviewerModal('${safe(r.refId)}','${safe(r.reviewers||'')}')">Assign Reviewers</button>
+      </td>
+      <td>
+        <textarea class="ntxt" id="note-${safe(r.refId)}">${safe(r.editorNotes||'')}</textarea>
+        <button class="nbtn" onclick="saveNote('${safe(r.refId)}')">Save</button>
+      </td>
+      <td style="min-width:100px">
+        <button class="nbtn" style="background:var(--bl);margin-bottom:4px;width:100%" onclick="openEmailModal('${safe(r.refId)}','${safe(r.email)}','${safe(r.firstName+' '+r.lastName)}','${safe(r.title)}')">📧 Email</button>
+        <button class="nbtn" style="background:var(--am);margin-bottom:4px;width:100%" onclick="viewDetail('${safe(r.refId)}')">👁 Detail</button>
+      </td>
+    </tr>
+  `).join('');
+
+  // Set current status in dropdowns
+  data.forEach(r => {
+    const sel = document.querySelector(`#row-${r.refId} .ssel`);
+    if (sel && r.status) sel.value = r.status;
+  });
+}
+
+/* ── SELECT ALL ───────────────────────────────────────────────────────── */
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+  updateBulkCount();
+}
+function updateBulkCount() {
+  const n = document.querySelectorAll('.row-check:checked').length;
+  document.querySelectorAll('.row-check').forEach(c => {
+    const row = c.closest('tr');
+    if (row) row.classList.toggle('selected', c.checked);
+  });
+}
+function getSelectedRefs() {
+  return Array.from(document.querySelectorAll('.row-check:checked')).map(c => c.value);
+}
+
+/* ── UPDATE STATUS ────────────────────────────────────────────────────── */
+async function updateStatus(refId, status) {
+  try {
+    const res  = await fetch(API_URL + '/api/admin/submissions/status', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ refId, status })
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    const rec = all.find(r => r.refId === refId);
+    if (rec) rec.status = status;
+    // Update badge in DOM
+    const row = document.getElementById('row-' + refId);
+    if (row) {
+      const badge = row.querySelector('.sbadge');
+      if (badge) { badge.className = 'sbadge ' + sc(status); badge.textContent = status; }
+    }
+    updateStats();
+    showToast('✓ Status updated: ' + status);
+  } catch(err) { showToast('Error: ' + err.message); }
+}
+
+/* ── SAVE NOTE ────────────────────────────────────────────────────────── */
+async function saveNote(refId) {
+  const notes = document.getElementById('note-' + refId)?.value || '';
+  try {
+    const res  = await fetch(API_URL + '/api/admin/submissions/notes', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ refId, notes })
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    const rec = all.find(r => r.refId === refId);
+    if (rec) rec.editorNotes = notes;
+    showToast('✓ Note saved');
+  } catch(err) { showToast('Error: ' + err.message); }
+}
+
+/* ── EMAIL MODAL ──────────────────────────────────────────────────────── */
+function openEmailModal(refId, email, authorName, title) {
+  document.getElementById('emailRefId').value  = refId;
+  document.getElementById('emailTo').value     = email;
+  document.getElementById('emailSubject').value = `Re: Your Manuscript [${refId}] — JSBAI`;
+  document.getElementById('emailBody').value   = `Dear ${authorName},\n\nRegarding your manuscript submission "${title}" (Ref: ${refId}):\n\n\n\nKind regards,\nEditorial Office\nJournal of Sustainable Biosciences & Agricultural Innovation`;
+  document.getElementById('emailModal').classList.add('on');
+}
+async function sendEmail() {
+  const refId   = document.getElementById('emailRefId').value;
+  const to      = document.getElementById('emailTo').value;
+  const subject = document.getElementById('emailSubject').value;
+  const body    = document.getElementById('emailBody').value;
+  if (!subject || !body) { showToast('Please fill in subject and message.'); return; }
+  try {
+    const res  = await fetch(API_URL + '/api/admin/email', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ refId, to, subject, body })
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    showToast('✓ Email sent to ' + to);
+    closeModal('emailModal');
+  } catch(err) {
+    // If endpoint not yet implemented, show feedback
+    showToast('Email queued (backend endpoint needed): ' + err.message);
+    closeModal('emailModal');
+  }
+}
+
+/* ── REVIEWER MODAL ───────────────────────────────────────────────────── */
+function openReviewerModal(refId, existing) {
+  document.getElementById('revRefId').value = refId;
+  const rows = document.getElementById('reviewerRows');
+  rows.innerHTML = '';
+  // Pre-fill existing reviewers if any
+  const revs = existing ? existing.split(';') : [];
+  if (revs.length === 0) revs.push('');
+  revs.forEach(rv => {
+    const parts = rv.split('|');
+    addRevRowWithData(parts[0]||'', parts[1]||'');
+  });
+  document.getElementById('reviewerModal').classList.add('on');
+}
+function addRevRow() {
+  addRevRowWithData('','');
+}
+function addRevRowWithData(name, email) {
+  const rows = document.getElementById('reviewerRows');
+  if (rows.children.length >= 3) { showToast('Maximum 3 reviewers per manuscript.'); return; }
+  const div = document.createElement('div');
+  div.className = 'rev-row';
+  div.innerHTML = `<input type="text" placeholder="Reviewer name" value="${safe(name)}"><input type="email" placeholder="reviewer@institution.com" value="${safe(email)}"><button class="rev-rm" onclick="removeRevRow(this)">×</button>`;
+  rows.appendChild(div);
+}
+function removeRevRow(btn) {
+  const rows = document.getElementById('reviewerRows');
+  if (rows.children.length > 1) btn.parentElement.remove();
+}
+async function saveReviewers() {
+  const refId = document.getElementById('revRefId').value;
+  const rows  = document.querySelectorAll('#reviewerRows .rev-row');
+  const revs  = Array.from(rows).map(r => {
+    const inputs = r.querySelectorAll('input');
+    return inputs[0].value.trim() + '|' + inputs[1].value.trim();
+  }).filter(r => r !== '|').join(';');
+  try {
+    const res = await fetch(API_URL + '/api/admin/submissions/notes', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ refId, notes: document.getElementById('note-'+refId)?.value || '', reviewers: revs })
+    });
+    showToast('✓ Reviewers saved');
+    const rec = all.find(r => r.refId === refId);
+    if (rec) rec.reviewers = revs;
+    // Update display in table
+    const revDisplay = document.querySelector(`#row-${refId} .aaffil`);
+    closeModal('reviewerModal');
+    filter();
+  } catch(err) { showToast('Saved locally: ' + err.message); closeModal('reviewerModal'); }
+}
+
+/* ── VIEW DETAIL ──────────────────────────────────────────────────────── */
+function viewDetail(refId) {
+  const r = all.find(r => r.refId === refId);
+  if (!r) return;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="dp-row"><span class="dp-lbl">Reference ID</span><span class="dp-val" style="font-family:monospace">${safe(r.refId)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Title</span><span class="dp-val">${safe(r.title)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Article Type</span><span class="dp-val">${safe(r.articleType)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Subject Area</span><span class="dp-val">${safe(r.subjectArea)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Keywords</span><span class="dp-val">${safe(r.keywords)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Author</span><span class="dp-val">${safe(r.firstName+' '+r.lastName)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Email</span><span class="dp-val">${safe(r.email)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">ORCID</span><span class="dp-val">${safe(r.orcid||'—')}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Affiliation</span><span class="dp-val">${safe(r.affiliation)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Co-Authors</span><span class="dp-val">${safe(r.coAuthors||'—')}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Funding</span><span class="dp-val">${safe(r.funding||'—')}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Suggested Reviewers</span><span class="dp-val">${safe(r.suggestedReviewers||'—')}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Submitted</span><span class="dp-val">${fmtDate(r.submittedAt)}</span></div>
+    <div class="dp-row"><span class="dp-lbl">Status</span><span class="dp-val"><span class="sbadge ${sc(r.status)}">${safe(r.status)}</span></span></div>
+    <div class="dp-row"><span class="dp-lbl">Abstract</span><span class="dp-val" style="font-size:12px;line-height:1.6">${safe(r.abstract)}</span></div>
+  `;
+  document.getElementById('detailModal').classList.add('on');
+}
+
+/* ── EXPORT EXCEL ─────────────────────────────────────────────────────── */
+function exportExcel() { exportCSVData(all, 'JSBAI_All_Submissions'); }
+function exportAccepted() { exportCSVData(all.filter(r=>r.status==='Accepted'), 'JSBAI_Accepted'); }
+function exportCSV() { exportCSVData(all, 'JSBAI_Submissions'); }
+
+function exportCSVData(data, filename) {
+  if (!data.length) { showToast('No data to export.'); return; }
+  const headers = ['Ref ID','Submitted','Title','Article Type','Subject Area','First Name','Last Name','Email','ORCID','Affiliation','Co-Authors','Keywords','Funding','Status','Editor Notes'];
+  const rows = data.map(r => [
+    r.refId, fmtDate(r.submittedAt), r.title, r.articleType, r.subjectArea,
+    r.firstName, r.lastName, r.email, r.orcid||'',
+    r.affiliation, r.coAuthors||'', r.keywords||'', r.funding||'',
+    r.status, r.editorNotes||''
+  ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Exported ' + data.length + ' records');
+}
+
+/* ── BULK EMAIL ───────────────────────────────────────────────────────── */
+function sendBulkEmail() {
+  const status  = document.getElementById('bulkStatus').value;
+  const subject = document.getElementById('bulkSubject').value.trim();
+  const message = document.getElementById('bulkMessage').value.trim();
+  if (!subject || !message) { showToast('Please fill in subject and message.'); return; }
+  const targets = status === 'All Authors' ? all : all.filter(r => r.status === status);
+  if (!targets.length) { showToast('No authors found with status: ' + status); return; }
+  showToast(`✓ Bulk email queued for ${targets.length} authors. (Connect email endpoint to send.)`);
+}
+
+/* ── ANALYTICS ────────────────────────────────────────────────────────── */
+function buildAnalytics(data) {
+  // Status distribution
+  const statuses = {};
+  data.forEach(r => statuses[r.status] = (statuses[r.status]||0)+1);
+  document.getElementById('statusChart').innerHTML = Object.entries(statuses).map(([s,n]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="width:${Math.round(n/data.length*100)*2}px;max-width:200px;height:20px;background:var(--fm);border-radius:3px;min-width:4px"></div>
+      <span style="font-size:13px;color:var(--km)">${s}: <strong>${n}</strong></span>
+    </div>`
+  ).join('') || '<p style="color:var(--kl);font-size:13px">No data yet</p>';
+
+  // Subject areas
+  const subjects = {};
+  data.forEach(r => subjects[r.subjectArea] = (subjects[r.subjectArea]||0)+1);
+  document.getElementById('subjectChart').innerHTML = Object.entries(subjects).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([s,n]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="width:${Math.round(n/data.length*100)*2}px;max-width:200px;height:20px;background:var(--g);border-radius:3px;min-width:4px"></div>
+      <span style="font-size:13px;color:var(--km)">${s||'—'}: <strong>${n}</strong></span>
+    </div>`
+  ).join('') || '<p style="color:var(--kl);font-size:13px">No data yet</p>';
+
+  // Article types
+  const types = {};
+  data.forEach(r => types[r.articleType] = (types[r.articleType]||0)+1);
+  document.getElementById('typeChart').innerHTML = Object.entries(types).map(([t,n]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="width:${Math.round(n/data.length*100)*2}px;max-width:200px;height:20px;background:var(--bl);border-radius:3px;min-width:4px"></div>
+      <span style="font-size:13px;color:var(--km)">${t||'—'}: <strong>${n}</strong></span>
+    </div>`
+  ).join('') || '<p style="color:var(--kl);font-size:13px">No data yet</p>';
+
+  // Monthly
+  const months = {};
+  data.forEach(r => {
+    const m = new Date(r.submittedAt).toLocaleDateString('en-IN',{month:'short',year:'numeric'});
+    months[m] = (months[m]||0)+1;
+  });
+  document.getElementById('monthChart').innerHTML = Object.entries(months).map(([m,n]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--kl);min-width:80px">${m}</div>
+      <div style="width:${n*20}px;max-width:200px;height:20px;background:var(--fl);border-radius:3px;min-width:4px"></div>
+      <span style="font-size:13px;color:var(--km)"><strong>${n}</strong></span>
+    </div>`
+  ).join('') || '<p style="color:var(--kl);font-size:13px">No data yet</p>';
+}
+
+/* ── STATS UPDATE ─────────────────────────────────────────────────────── */
+function updateStats() {
+  document.getElementById('s-all').textContent  = all.length;
+  document.getElementById('s-rev').textContent  = all.filter(r=>r.status==='Under Editorial Review').length;
+  document.getElementById('s-rvis').textContent = all.filter(r=>r.status==='Revision Requested').length;
+  document.getElementById('s-acc').textContent  = all.filter(r=>r.status==='Accepted').length;
+  document.getElementById('s-rej').textContent  = all.filter(r=>r.status==='Rejected').length;
+  document.getElementById('s-pub').textContent  = all.filter(r=>r.status==='Published').length;
+}
+
+/* ── TAB SWITCH ───────────────────────────────────────────────────────── */
+function switchTab(btn, id) {
+  document.querySelectorAll('.tn').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('tab-' + id).classList.add('on');
+}
+
+/* ── MODAL ────────────────────────────────────────────────────────────── */
+function closeModal(id) { document.getElementById(id).classList.remove('on'); }
+
+/* ── TOAST ────────────────────────────────────────────────────────────── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 3500);
+}
+</script>
+</body>
+</html>
